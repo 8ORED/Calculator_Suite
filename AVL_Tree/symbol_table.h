@@ -15,7 +15,7 @@ struct Node {
     int height;
 
     Node(const std::string& n, double v)
-        : name(n), value(v), left(nullptr), right(nullptr), height(0) {}
+        : name(n), value(v), left(nullptr), right(nullptr), height(1) {}
 };
 
 class SymbolTable {
@@ -24,10 +24,12 @@ private:
 
     // --- internal recursive helpers ---
     Node* insertHelper(Node* node, const std::string& name, double value);
+    Node* removeHelper(Node* node, const std::string& name, bool& wasRemoved);
     Node* searchHelper(Node* node, const std::string& name);
     void inorderHelper(Node* node, std::vector<std::pair<std::string, double>>& result);
     void destroy(Node* node);
-
+    Node* findMin(Node* node); // leftmost node — used to find in-order successor on delete
+    
     // --- AVL balancing helpers (Day 2) ---
     int getHeight(Node* node);              // -1 for nullptr, Convention B
     int getBalanceFactor(Node* node);       // height(left) - height(right)

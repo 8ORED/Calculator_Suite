@@ -14,6 +14,16 @@ void SymbolTable::destroy(Node* node) {
     delete node;
 }
 
+// Finds the leftmost node in a subtree — i.e. the node with the smallest key.
+// Used during deletion to find the in-order successor of a node with two children.
+Node* SymbolTable::findMin(Node* node) {
+    Node* current = node;
+    while (current->left != nullptr) {
+        current = current->left;
+    }
+    return current;
+}
+ 
 // AVL balancing helpers
 
 int SymbolTable::getHeight(Node* node) {
@@ -136,9 +146,44 @@ bool SymbolTable::search(const std::string& name, double& outValue) {
     return true;
 }
 
+Node* SymbolTable::removeHelper(Node* node, const std::string& name, bool& wasRemoved) {
+    if (node == nullptr) {
+        wasRemoved = false; // name not found anywhere in this subtree
+        return nullptr;
+    }
+ 
+    if (name < node->name) {
+        node->left = removeHelper(node->left, name, wasRemoved);
+    } else if (name > node->name) {
+        node->right = removeHelper(node->right, name, wasRemoved);
+    } else {
+        // this is the node to delete
+        wasRemoved = true;
+ 
+        if (node->left == nullptr || node->right == nullptr) {
+            // Case 1: leaf, or Case 2: exactly one child
+            Node* child = (node->left != nullptr) ? node->left : node->right;
+            delete node;
+            return child; // if leaf, child is nullptr; if one child, child replaces node
+        } else {
+            // Case 3: two children — replace with in-order successor
+            // (the smallest node in the right subtree), then delete that successor instead
+            Node* successor = findMin(node->right);
+            node->name = successor->name;
+            node->value = successor->value;
+            bool dummy; // successor is guaranteed to exist, so this call cannot fail
+            node->right = removeHelper(node->right, successor->name, dummy);
+        }
+    }
+
+    // On the way back up the recursion: rebalance this node
+    return balance(node);
+}    
+
 bool SymbolTable::remove(const std::string& name) {
-    // TODO (Day 4): implement BST delete + rebalancing
-    return false;
+    bool wasRemoved = false;
+    root = removeHelper(root, name, wasRemoved);
+    return wasRemoved;
 }
 
 std::vector<std::pair<std::string, double>> SymbolTable::listVariables() {
