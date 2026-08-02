@@ -27,7 +27,7 @@ Node* SymbolTable::findMin(Node* node) {
 // AVL balancing helpers
 
 int SymbolTable::getHeight(Node* node) {
-    if (node == nullptr) return 0; // Convention A: empty subtree has height 0
+    if (node == nullptr) return 0; // Convention: empty subtree has height 0
     return node->height;
 }
  
@@ -40,6 +40,11 @@ void SymbolTable::updateHeight(Node* node) {
     node->height = 1 + std::max(getHeight(node->left), getHeight(node->right));
 }
 
+// Right rotation — used to fix a left-heavy (LL) imbalance.
+// Before: y is the subtree root, x is y's left child, T2 is x's right subtree.
+// After:  x becomes the new subtree root, y becomes x's right child,
+//         and T2 (x's old right subtree) is reattached as y's new left subtree
+//         (valid because every key in T2 is greater than x and less than y).
 Node* SymbolTable::rotateRight(Node* y) {
     Node* x = y->left;
     Node* T2 = x->right;
@@ -55,6 +60,10 @@ Node* SymbolTable::rotateRight(Node* y) {
     return x; // new subtree root
 }
 
+// Left rotation — used to fix a right-heavy (RR) imbalance.
+// Mirror image of rotateRight: x is the subtree root, y is x's right child,
+// T2 is y's left subtree. After rotation, y becomes the new subtree root,
+// x becomes y's left child, and T2 is reattached as x's new right subtree.
 Node* SymbolTable::rotateLeft(Node* x) {
     Node* y = x->right;
     Node* T2 = y->left;
@@ -100,6 +109,7 @@ Node* SymbolTable::balance(Node* node) {
     return node;
 }
 
+// AVL insert — plain BST insert, then rebalance on the way back up the recursion
 Node* SymbolTable::insertHelper(Node* node, const std::string& name, double value) {
     if (node == nullptr) {
         return new Node(name, value);
@@ -146,6 +156,8 @@ bool SymbolTable::search(const std::string& name, double& outValue) {
     return true;
 }
 
+// AVL delete — BST-style deletion, then rebalance on the way back up the recursion.
+// wasRemoved is set to true only if a node matching `name` was actually found and removed.
 Node* SymbolTable::removeHelper(Node* node, const std::string& name, bool& wasRemoved) {
     if (node == nullptr) {
         wasRemoved = false; // name not found anywhere in this subtree
