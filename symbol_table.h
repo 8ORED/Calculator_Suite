@@ -5,37 +5,37 @@
 #include <vector>
 
 // Height convention : leaf height = 1, empty subtree (nullptr) = 0
-struct Node {
+struct AVLNode {
     std::string name;
     double value;
-    Node* left;
-    Node* right;
+    AVLNode* left;
+    AVLNode* right;
     int height;
 
-    Node(const std::string& n, double v)
+    AVLNode(const std::string& n, double v)
         : name(n), value(v), left(nullptr), right(nullptr), height(1) {}
 };
 
 class SymbolTable {
 private:
-    Node* root;
+    AVLNode* root;
 
     // internal recursive helpers
-    Node* insertHelper(Node* node, const std::string& name, double value);
-    Node* removeHelper(Node* node, const std::string& name, bool& wasRemoved);
-    Node* searchHelper(Node* node, const std::string& name);
-    void inorderHelper(Node* node, std::vector<std::pair<std::string, double>>& result);
-    void destroy(Node* node);
-    Node* findMin(Node* node); // leftmost node — used to find in-order successor on delete
+    AVLNode* insertHelper(AVLNode* node, const std::string& name, double value);
+    AVLNode* removeHelper(AVLNode* node, const std::string& name, bool& wasRemoved);
+    AVLNode* searchHelper(AVLNode* node, const std::string& name);
+    void inorderHelper(AVLNode* node, std::vector<std::pair<std::string, double>>& result);
+    void destroy(AVLNode* node);
+    AVLNode* findMin(AVLNode* node); // leftmost node — used to find in-order successor on delete
     
     //AVL balancing helpers
-    int getHeight(Node* node);              // 0 for nullptr
-    int getBalanceFactor(Node* node);       // height(left) - height(right)
-    void updateHeight(Node* node);          // recompute node->height from children
+    int getHeight(AVLNode* node);              // 0 for nullptr
+    int getBalanceFactor(AVLNode* node);       // height(left) - height(right)
+    void updateHeight(AVLNode* node);          // recompute node->height from children
  
-    Node* rotateRight(Node* y);             // LL case
-    Node* rotateLeft(Node* x);              // RR case
-    Node* balance(Node* node);              // checks balance factor, applies correct rotation
+    AVLNode* rotateRight(AVLNode* y);             // LL case
+    AVLNode* rotateLeft(AVLNode* x);              // RR case
+    AVLNode* balance(AVLNode* node);              // checks balance factor, applies correct rotation
 
 public:
     SymbolTable();

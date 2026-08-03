@@ -7,7 +7,7 @@ SymbolTable::~SymbolTable() {
     destroy(root);
 }
 
-void SymbolTable::destroy(Node* node) {
+void SymbolTable::destroy(AVLNode* node) {
     if (node == nullptr) return;
     destroy(node->left);
     destroy(node->right);
@@ -16,8 +16,8 @@ void SymbolTable::destroy(Node* node) {
 
 // Finds the leftmost node in a subtree — i.e. the node with the smallest key.
 // Used during deletion to find the in-order successor of a node with two children.
-Node* SymbolTable::findMin(Node* node) {
-    Node* current = node;
+AVLNode* SymbolTable::findMin(AVLNode* node) {
+    AVLNode* current = node;
     while (current->left != nullptr) {
         current = current->left;
     }
@@ -26,17 +26,17 @@ Node* SymbolTable::findMin(Node* node) {
  
 // AVL balancing helpers
 
-int SymbolTable::getHeight(Node* node) {
+int SymbolTable::getHeight(AVLNode* node) {
     if (node == nullptr) return 0; // Convention: empty subtree has height 0
     return node->height;
 }
  
-int SymbolTable::getBalanceFactor(Node* node) {
+int SymbolTable::getBalanceFactor(AVLNode* node) {
     if (node == nullptr) return 0;
     return getHeight(node->left) - getHeight(node->right);
 }
  
-void SymbolTable::updateHeight(Node* node) {
+void SymbolTable::updateHeight(AVLNode* node) {
     node->height = 1 + std::max(getHeight(node->left), getHeight(node->right));
 }
 
@@ -45,9 +45,9 @@ void SymbolTable::updateHeight(Node* node) {
 // After:  x becomes the new subtree root, y becomes x's right child,
 //         and T2 (x's old right subtree) is reattached as y's new left subtree
 //         (valid because every key in T2 is greater than x and less than y).
-Node* SymbolTable::rotateRight(Node* y) {
-    Node* x = y->left;
-    Node* T2 = x->right;
+AVLNode* SymbolTable::rotateRight(AVLNode* y) {
+    AVLNode* x = y->left;
+    AVLNode* T2 = x->right;
  
     // perform rotation
     x->right = y;
@@ -64,9 +64,9 @@ Node* SymbolTable::rotateRight(Node* y) {
 // Mirror image of rotateRight: x is the subtree root, y is x's right child,
 // T2 is y's left subtree. After rotation, y becomes the new subtree root,
 // x becomes y's left child, and T2 is reattached as x's new right subtree.
-Node* SymbolTable::rotateLeft(Node* x) {
-    Node* y = x->right;
-    Node* T2 = y->left;
+AVLNode* SymbolTable::rotateLeft(AVLNode* x) {
+    AVLNode* y = x->right;
+    AVLNode* T2 = y->left;
  
     // perform rotation
     y->left = x;
@@ -81,7 +81,7 @@ Node* SymbolTable::rotateLeft(Node* x) {
 
 // Checks the balance factor of a node and applies the correct rotation
 // (or combination of two rotations) to restore the AVL property.
-Node* SymbolTable::balance(Node* node) {
+AVLNode* SymbolTable::balance(AVLNode* node) {
     updateHeight(node);
     int bf = getBalanceFactor(node);
  
@@ -110,9 +110,9 @@ Node* SymbolTable::balance(Node* node) {
 }
 
 // AVL insert — plain BST insert, then rebalance on the way back up the recursion
-Node* SymbolTable::insertHelper(Node* node, const std::string& name, double value) {
+AVLNode* SymbolTable::insertHelper(AVLNode* node, const std::string& name, double value) {
     if (node == nullptr) {
-        return new Node(name, value);
+        return new AVLNode(name, value);
     }
 
     if (name < node->name) {
@@ -128,7 +128,7 @@ Node* SymbolTable::insertHelper(Node* node, const std::string& name, double valu
     return balance(node);
 }
 
-Node* SymbolTable::searchHelper(Node* node, const std::string& name) {
+AVLNode* SymbolTable::searchHelper(AVLNode* node, const std::string& name) {
     if (node == nullptr || node->name == name) {
         return node;
     }
@@ -138,7 +138,7 @@ Node* SymbolTable::searchHelper(Node* node, const std::string& name) {
     return searchHelper(node->right, name);
 }
 
-void SymbolTable::inorderHelper(Node* node, std::vector<std::pair<std::string, double>>& result) {
+void SymbolTable::inorderHelper(AVLNode* node, std::vector<std::pair<std::string, double>>& result) {
     if (node == nullptr) return;
     inorderHelper(node->left, result);
     result.push_back({node->name, node->value});
@@ -150,7 +150,7 @@ void SymbolTable::insert(const std::string& name, double value) {
 }
 
 bool SymbolTable::search(const std::string& name, double& outValue) {
-    Node* found = searchHelper(root, name);
+    AVLNode* found = searchHelper(root, name);
     if (found == nullptr) return false;
     outValue = found->value;
     return true;
@@ -158,7 +158,7 @@ bool SymbolTable::search(const std::string& name, double& outValue) {
 
 // AVL delete — BST-style deletion, then rebalance on the way back up the recursion.
 // wasRemoved is set to true only if a node matching `name` was actually found and removed.
-Node* SymbolTable::removeHelper(Node* node, const std::string& name, bool& wasRemoved) {
+AVLNode* SymbolTable::removeHelper(AVLNode* node, const std::string& name, bool& wasRemoved) {
     if (node == nullptr) {
         wasRemoved = false; // name not found anywhere in this subtree
         return nullptr;
@@ -174,13 +174,13 @@ Node* SymbolTable::removeHelper(Node* node, const std::string& name, bool& wasRe
  
         if (node->left == nullptr || node->right == nullptr) {
             // Case 1: leaf, or Case 2: exactly one child
-            Node* child = (node->left != nullptr) ? node->left : node->right;
+            AVLNode* child = (node->left != nullptr) ? node->left : node->right;
             delete node;
             return child; // if leaf, child is nullptr; if one child, child replaces node
         } else {
             // Case 3: two children — replace with in-order successor
             // (the smallest node in the right subtree), then delete that successor instead
-            Node* successor = findMin(node->right);
+            AVLNode* successor = findMin(node->right);
             node->name = successor->name;
             node->value = successor->value;
             bool dummy; // successor is guaranteed to exist, so this call cannot fail
