@@ -1,5 +1,5 @@
-#ifndef PERSON2_H
-#define PERSON2_H
+#ifndef DATA_STORAGE_H
+#define DATA_STORAGE_H
 
 #include <string>
 using namespace std;
@@ -14,14 +14,9 @@ struct Node {
     Node* next;
 };
 
-// insert a term into a polynomial, keeping it sorted by
-// exponent (descending). head is passed by reference so
-// the function can update it.
+
 void insertTerm(Node*& head, int coeff, int exponent);
 
-// asks the USER how many terms the polynomial has, then
-// asks for each term's coefficient and exponent, and
-// builds the polynomial from that input.
 void inputPolynomial(Node*& head);
 
 // returns head of a new polynomial = poly1 + poly2
@@ -40,10 +35,7 @@ string polyToString(Node* head);
 // frees all nodes in a polynomial list
 void clearPoly(Node*& head);
 
-
-// ------------------------------------------------------
 // PART 2: CIRCULAR QUEUE FOR CALCULATION HISTORY
-// ------------------------------------------------------
 
 const int MAX_HISTORY = 10; // fixed size of history
 
@@ -67,4 +59,4 @@ bool dequeue(CircularQueue& q, string& removed);
 // prints all records, oldest first
 void displayHistory(CircularQueue& q);
 
-#endif // PERSON2_H
+#endif // DATA_STORAGE_H
