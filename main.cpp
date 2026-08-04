@@ -19,24 +19,35 @@ static string lastEncoded = ""; // most recently compressed bitstring, for "deco
 // expression string with their stored digit value (0-9 only).
 // Returns true on success; on failure, prints an error and returns false.
 // ------------------------------------------------------
-bool substituteVariables(string& expr) {
-    for (size_t i = 0; i < expr.length(); i++) {
-        char ch = expr[i];
+bool substituteVariables(const string& rawExpr, string& outExpr) {
+    outExpr.clear();
+    size_t i = 0;
+    while (i < rawExpr.length()) {
+        char ch = rawExpr[i];
         if (isalpha(static_cast<unsigned char>(ch))) {
-            string name(1, ch);
+            size_t j = i;
+            string name;
+            while (j < rawExpr.length() && isalpha(static_cast<unsigned char>(rawExpr[j]))) {
+                name += rawExpr[j];
+                j++;
+            }
             double value;
             if (!symbolTable.search(name, value)) {
                 cout << "Error: undefined variable '" << name << "'" << endl;
                 return false;
             }
-            if (value != floor(value) || value < 0 || value > 9) {
+            if (value != floor(value)) {
                 cout << "Error: variable '" << name << "' = " << value
-                     << " cannot be used in an expression (must be a whole number 0-9, "
-                     << "since the expression engine only supports single-digit operands)"
+                     << " cannot be used in an expression (must be a whole number, "
+                     << "since the expression engine only supports integer arithmetic)"
                      << endl;
                 return false;
             }
-            expr[i] = static_cast<char>('0' + static_cast<int>(value));
+            outExpr += to_string(static_cast<long long>(value));
+            i = j;
+        } else {
+            outExpr += ch;
+            i++;
         }
     }
     return true;
@@ -47,10 +58,8 @@ bool substituteVariables(string& expr) {
 // ------------------------------------------------------
 
 void handleEval(const string& rawExpr) {
-    string expr = rawExpr;
-    string originalExpr = rawExpr; // keep original (with variable names) for history/logging
-
-    if (!substituteVariables(expr)) return;
+    string expr;
+    if (!substituteVariables(rawExpr, expr)) return;
 
     string postfix = infixToPostfix(expr);
     int result = evaluatePostfix(postfix);
@@ -59,15 +68,13 @@ void handleEval(const string& rawExpr) {
     cout << "Result:  " << result << endl;
 
     ostringstream record;
-    record << originalExpr << " = " << result;
+    record << rawExpr << " = " << result;
     enqueue(history, record.str());
 }
 
 void handlePrefixEval(const string& rawExpr) {
-    string expr = rawExpr;
-    string originalExpr = rawExpr;
-
-    if (!substituteVariables(expr)) return;
+    string expr;
+    if (!substituteVariables(rawExpr ,expr)) return;
 
     string prefix = infixToPrefix(expr);
     int result = evaluatePrefix(prefix);
@@ -76,7 +83,7 @@ void handlePrefixEval(const string& rawExpr) {
     cout << "Result: " << result << endl;
 
     ostringstream record;
-    record << originalExpr << " = " << result << " (prefix)";
+    record << rawExpr << " = " << result << " (prefix)";
     enqueue(history, record.str());
 }
 
@@ -216,9 +223,8 @@ void printHelp() {
     cout << "  decompress          decode the most recently compressed log" << endl;
     cout << "  help                show this message" << endl;
     cout << "  quit                exit" << endl;
-    cout << "\nNote: variables used inside eval/prefix expressions must have" << endl;
-    cout << "single-letter names and whole-number values from 0-9, since the" << endl;
-    cout << "expression engine parses one character per token." << endl << endl;
+    cout << "\nNote: variables used inside eval/prefix expressions must hold a" << endl;
+    cout << "whole number (the expression engine evaluates using integers)." << endl << endl;
 }
 
 // ------------------------------------------------------
