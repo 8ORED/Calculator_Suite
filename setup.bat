@@ -1,40 +1,22 @@
 @echo off
-title DSA Project Setup
-color 0A
+REM ============================================================
+REM  build_and_run.bat
+REM  Compiles and runs Calc-Suite (all 4 modules + CLI).
+REM  Requires g++ (MinGW / MSYS2) to be installed and on PATH.
+REM  Run this from the folder containing all the .cpp/.h files.
+REM ============================================================
 
-echo =====================================
-echo        DSA PROJECT SETUP
-echo =====================================
-echo.
+echo Compiling Calc-Suite...
 
-g++ --version >nul 2>&1
+g++ -std=c++17 -Wall -o calcsuite.exe main.cpp symbol_table.cpp expression_engine.cpp data_storage.cpp huffman.cpp
 
-if %errorlevel% neq 0 (
-    echo ERROR: g++ compiler not found.
-    echo.
-    pause
-    exit /b
-)
-
-echo g++ compiler found.
-echo.
-
-echo Building project...
-
-g++ *.cpp -std=c++17 -o CalcSuite.exe
-
+REM %errorlevel% is set by g++: 0 means success, non-zero means it failed.
 if %errorlevel% neq 0 (
     echo.
-    echo Build Failed!
+    echo Build FAILED. Fix the errors above and try again.
     pause
-    exit /b
+    exit /b %errorlevel%
 )
 
-echo.
-echo =====================================
-echo Setup Complete!
-echo Executable Created:
-echo CalcSuite.exe
-echo =====================================
-
+echo Build succeeded.
 pause

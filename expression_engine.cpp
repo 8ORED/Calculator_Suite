@@ -1,6 +1,9 @@
 #include "expression_engine.h"
 #include <algorithm>
 #include <cmath>
+#include <sstream>
+#include <vector>
+#include <cctype>
 using namespace std;
 
 // CharStack
@@ -81,60 +84,145 @@ int precedence(char ch)
     return 0;
 }
 
-string infixToPostfix(string exp)
-{
-    CharStack s;
-    string postfix = "";
-    for (int i = 0; i < (int)exp.length(); i++)
+static vector<string> tokenize(const string& exp){
+    vector<string> tokens;
+    size_t i = 0;
+    while (i < exp.length())
     {
         char ch = exp[i];
-        if (isOperand(ch))
+        if (isspace(static_cast<unsigned char>(ch)))
         {
-            postfix += ch;
+            i++;
         }
-        else if (ch == '(')
+        else if (isdigit(static_cast<unsigned char>(ch)))
         {
-            s.push(ch);
+            string number;
+            while (i < exp.length() && isdigit(static_cast<unsigned char>(exp[i])))
+            {
+                number += exp[i];
+                i++;
+            }
+            tokens.push_back(number);
         }
-        else if (ch == ')')
+        else if (ch == '(' || ch == ')' || isOperator(ch))
+        {
+            tokens.push_back(string(1, ch));
+            i++;
+        }
+        else
+        {
+            // Unrecognized character (should not occur if the CLI has
+            // already substituted variable names before calling this).
+            i++;
+        }
+    }
+    return tokens;    
+}
+
+static bool isNumberToken(const string& tok){
+    return !tok.empty() && isdigit(static_cast<unsigned char>(tok[0]));
+}
+
+string infixToPostfix(string exp){
+    vector<string> tokens = tokenize(exp);
+    CharStack s;
+    vector<string> output;
+
+    for (const string& tok : tokens)
+    {
+        if (isNumberToken(tok))
+        {
+            output.push_back(tok);
+        }
+        else if (tok == "(")
+        {
+            s.push('(');
+        }
+        else if (tok == ")")
         {
             while (!s.isEmpty() && s.peek() != '(')
-                postfix += s.pop();
+                output.push_back(string(1, s.pop()));
 
+            s.pop(); // discard the '('
+        }
+        else
+        {
+            char op = tok[0];
+            while (!s.isEmpty() &&
+                   precedence(s.peek()) >= precedence(op))
+            {
+                output.push_back(string(1, s.pop()));
+            }
+            s.push(op);
+        }
+    }
+    while (!s.isEmpty())
+        output.push_back(string(1, s.pop()));
+
+    string postfix;
+    for (size_t i = 0; i < output.size(); i++)
+    {
+        postfix += output[i];
+        if (i + 1 < output.size()) postfix += ' ';
+    }
+    return postfix;
+}
+
+string infixToPrefix(string exp){
+    vector<string> tokens = tokenize(exp);
+    reverse(tokens.begin(), tokens.end());
+    for (string& tok : tokens)
+    {
+        if (tok == "(") tok = ")";
+        else if (tok == ")") tok = "(";
+    }
+
+    // Same postfix-building logic as infixToPostfix, applied to the
+    // reversed/paren-swapped token list, then the result is reversed.
+    CharStack s;
+    vector<string> output;
+    for (const string& tok : tokens)
+    {
+        if (isNumberToken(tok))
+        {
+            output.push_back(tok);
+        }
+        else if (tok == "(")
+        {
+            s.push('(');
+        }
+        else if (tok == ")")
+        {
+            while (!s.isEmpty() && s.peek() != '(')
+                output.push_back(string(1, s.pop()));
             s.pop();
         }
         else
         {
+            char op = tok[0];
             while (!s.isEmpty() &&
-                   precedence(s.peek()) >= precedence(ch))
+                   precedence(s.peek()) >= precedence(op))
             {
-                postfix += s.pop();
+                output.push_back(string(1, s.pop()));
             }
-            s.push(ch);
+            s.push(op);
         }
     }
     while (!s.isEmpty())
-        postfix += s.pop();
-    return postfix;
-}
+        output.push_back(string(1, s.pop()));
 
-string infixToPrefix(string exp)
-{
-    reverse(exp.begin(), exp.end());
-    for (int i = 0; i < (int)exp.length(); i++)
+    reverse(output.begin(), output.end());
+
+    string prefix;
+    for (size_t i = 0; i < output.size(); i++)
     {
-        if (exp[i] == '(')
-            exp[i] = ')';
-        else if (exp[i] == ')')
-            exp[i] = '(';
+        prefix += output[i];
+        if (i + 1 < output.size()) prefix += ' ';
     }
-    string prefix = infixToPostfix(exp);
-    reverse(prefix.begin(), prefix.end());
     return prefix;
 }
 
-int operation(int a, int b, char op)
-{
+int operation(int a, int b, char op){
     switch (op)
     {
         case '+':
@@ -156,41 +244,45 @@ int operation(int a, int b, char op)
     return 0;
 }
 
-int evaluatePostfix(string exp)
-{
+int evaluatePostfix(string exp){
     IntStack s;
-    for (int i = 0; i < (int)exp.length(); i++)
+    istringstream iss(exp);
+    string tok;
+    while (iss >> tok)
     {
-        char ch = exp[i];
-        if (isOperand(ch))
+        if (isNumberToken(tok))
         {
-            s.push(ch - '0');
+            s.push(stoi(tok));
         }
-        else if (isOperator(ch))
+        else if (isOperator(tok[0]))
         {
             int val1 = s.pop();
             int val2 = s.pop();
-            s.push(operation(val2, val1, ch));
+            s.push(operation(val2, val1, tok[0]));
         }
     }
     return s.pop();
 }
 
-int evaluatePrefix(string exp)
-{
+int evaluatePrefix(string exp){
     IntStack s;
-    for (int i = (int)exp.length() - 1; i >= 0; i--)
+    istringstream iss(exp);
+    vector<string> tokens;
+    string tok;
+    while (iss >> tok) tokens.push_back(tok);
+
+    for (int i = (int)tokens.size() - 1; i >= 0; i--)
     {
-        char ch = exp[i];
-        if (isOperand(ch))
+        const string& t = tokens[i];
+        if (isNumberToken(t))
         {
-            s.push(ch - '0');
+            s.push(stoi(t));
         }
-        else if (isOperator(ch))
+        else if (isOperator(t[0]))
         {
             int val1 = s.pop();
             int val2 = s.pop();
-            s.push(operation(val1, val2, ch));
+            s.push(operation(val1, val2, t[0]));
         }
     }
     return s.pop();
