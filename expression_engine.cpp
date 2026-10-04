@@ -26,18 +26,14 @@ template <typename T>
 T Stack<T>::pop()
 {
     if (isEmpty()) throw runtime_error("Invalid expression (empty stack)");
-    return st[top];
+    return st[top--];
 }
 
 template <typename T>
 T Stack<T>::peek()
 {
-    try{
-        if(isEmpty()){
-            throw(0);
-        }
-        return st[top];
-    }
+    if (isEmpty()) throw runtime_error("Invalid expression (empty stack)");
+    return st[top];
 }
 
 template <typename T>
