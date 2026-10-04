@@ -8,29 +8,17 @@ using namespace std;
 
 // Stack for operators (used during infix -> postfix/prefix
 
-class CharStack {
+template <typename T>
+class Stack {
 private:
-    char st[MAX];
+    T st[MAX];
     int top;
 
 public:
-    CharStack();
-    void push(char value);
-    char pop();
-    char peek();
-    bool isEmpty();
-};
-
-// Stack for evaluation (used while evaluating postfix/prefix)
-class IntStack {
-private:
-    int st[MAX];
-    int top;
-
-public:
-    IntStack();
-    void push(int value);
-    int pop();
+    Stack();
+    void push(T value);
+    T pop();
+    T peek();
     bool isEmpty();
 };
 
