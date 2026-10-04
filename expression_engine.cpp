@@ -4,53 +4,44 @@
 #include <sstream>
 #include <vector>
 #include <cctype>
+#include <stdexcept>
 using namespace std;
 
 // CharStack
 
-CharStack::CharStack()
+template <typename T>
+Stack<T>::Stack()
 {
     top = -1;
 }
 
-void CharStack::push(char value)
+template <typename T>
+void Stack<T>::push(T value)
 {
+    if (top == MAX - 1) throw runtime_error("Expression too long (stack overflow)");
     st[++top] = value;
 }
 
-char CharStack::pop()
+template <typename T>
+T Stack<T>::pop()
 {
-    return st[top--];
-}
-
-char CharStack::peek()
-{
+    if (isEmpty()) throw runtime_error("Invalid expression (empty stack)");
     return st[top];
 }
 
-bool CharStack::isEmpty()
+template <typename T>
+T Stack<T>::peek()
 {
-    return top == -1;
+    try{
+        if(isEmpty()){
+            throw(0);
+        }
+        return st[top];
+    }
 }
 
-// IntStack
-
-IntStack::IntStack()
-{
-    top = -1;
-}
-
-void IntStack::push(int value)
-{
-    st[++top] = value;
-}
-
-int IntStack::pop()
-{
-    return st[top--];
-}
-
-bool IntStack::isEmpty()
+template <typename T>
+bool Stack<T>::isEmpty()
 {
     return top == -1;
 }
@@ -125,7 +116,7 @@ static bool isNumberToken(const string& tok){
 
 string infixToPostfix(string exp){
     vector<string> tokens = tokenize(exp);
-    CharStack s;
+    Stack<char> s;
     vector<string> output;
 
     for (const string& tok : tokens)
@@ -148,8 +139,9 @@ string infixToPostfix(string exp){
         else
         {
             char op = tok[0];
-            while (!s.isEmpty() &&
-                   precedence(s.peek()) >= precedence(op))
+            while (!s.isEmpty() && 
+                    (precedence(s.peek()) > precedence(op) || 
+                        (precedence(s.peek()) == precedence(op) && op != '^')))
             {
                 output.push_back(string(1, s.pop()));
             }
@@ -179,7 +171,7 @@ string infixToPrefix(string exp){
 
     // Same postfix-building logic as infixToPostfix, applied to the
     // reversed/paren-swapped token list, then the result is reversed.
-    CharStack s;
+    Stack<char> s;
     vector<string> output;
     for (const string& tok : tokens)
     {
@@ -201,7 +193,8 @@ string infixToPrefix(string exp){
         {
             char op = tok[0];
             while (!s.isEmpty() &&
-                   precedence(s.peek()) >= precedence(op))
+                   (precedence(s.peek()) > precedence(op) ||
+                    (precedence(s.peek())) == precedence(op) && op == '^'))
             {
                 output.push_back(string(1, s.pop()));
             }
@@ -235,17 +228,20 @@ int operation(int a, int b, char op){
             return a * b;
             break;
         case '/':
+            if (b == 0) throw runtime_error("Division by zero");
             return a / b;
             break;
         case '^':
-            return pow(a, b);
+            int r = 1;
+            for (int i = 0; i < b; i++) r *= a;
+            return r;
             break;
-    }
     return 0;
+    }
 }
 
 int evaluatePostfix(string exp){
-    IntStack s;
+    Stack<int> s;
     istringstream iss(exp);
     string tok;
     while (iss >> tok)
@@ -265,7 +261,7 @@ int evaluatePostfix(string exp){
 }
 
 int evaluatePrefix(string exp){
-    IntStack s;
+    Stack<int> s;
     istringstream iss(exp);
     vector<string> tokens;
     string tok;
