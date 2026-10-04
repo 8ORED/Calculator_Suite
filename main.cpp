@@ -61,15 +61,19 @@ void handleEval(const string& rawExpr) {
     string expr;
     if (!substituteVariables(rawExpr, expr)) return;
 
-    string postfix = infixToPostfix(expr);
-    int result = evaluatePostfix(postfix);
+    try {
+        string postfix = infixToPostfix(expr);
+        int result = evaluatePostfix(postfix);
 
-    cout << "Postfix: " << postfix << endl;
-    cout << "Result:  " << result << endl;
+        cout << "Postfix: " << postfix << endl;
+        cout << "Result:  " << result << endl;
 
-    ostringstream record;
-    record << rawExpr << " = " << result;
-    enqueue(history, record.str());
+        ostringstream record;
+        record << rawExpr << " = " << result;
+        enqueue(history, record.str());
+    } catch (const exception& e) {
+        cout << "Error: " << e.what() << endl;
+    }
 }
 
 void handlePrefixEval(const string& rawExpr) {
