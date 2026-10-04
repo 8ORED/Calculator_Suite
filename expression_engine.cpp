@@ -144,8 +144,12 @@ string infixToPostfix(string exp){
             s.push(op);
         }
     }
-    while (!s.isEmpty())
-        output.push_back(string(1, s.pop()));
+
+    while (!s.isEmpty()){
+    char c = s.pop();
+    if (c == '(') throw runtime_error("Mismatched brackets");
+    output.push_back(string(1, c));
+    }
 
     string postfix;
     for (size_t i = 0; i < output.size(); i++)
@@ -197,8 +201,12 @@ string infixToPrefix(string exp){
             s.push(op);
         }
     }
-    while (!s.isEmpty())
-        output.push_back(string(1, s.pop()));
+
+    while (!s.isEmpty()){
+    char c = s.pop();
+    if (c == '(') throw runtime_error("Mismatched brackets");
+    output.push_back(string(1, c));
+    }
 
     reverse(output.begin(), output.end());
 
@@ -253,7 +261,9 @@ int evaluatePostfix(string exp){
             s.push(operation(val2, val1, tok[0]));
         }
     }
-    return s.pop();
+    int result = s.pop();
+    if (!s.isEmpty()) throw runtime_error("Invalid expression (missing operator)");
+    return result;
 }
 
 int evaluatePrefix(string exp){
@@ -277,5 +287,7 @@ int evaluatePrefix(string exp){
             s.push(operation(val1, val2, t[0]));
         }
     }
-    return s.pop();
+    int result = s.pop();
+if (!s.isEmpty()) throw runtime_error("Invalid expression (missing operator)");
+return result;
 }
