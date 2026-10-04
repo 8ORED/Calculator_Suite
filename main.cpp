@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <cmath>
+#include <stdexcept>
 #include "symbol_table.h"
 #include "expression_engine.h"
 #include "data_storage.h"
@@ -61,30 +62,38 @@ void handleEval(const string& rawExpr) {
     string expr;
     if (!substituteVariables(rawExpr, expr)) return;
 
-    string postfix = infixToPostfix(expr);
-    int result = evaluatePostfix(postfix);
+    try {
+        string postfix = infixToPostfix(expr);
+        int result = evaluatePostfix(postfix);
 
-    cout << "Postfix: " << postfix << endl;
-    cout << "Result:  " << result << endl;
+        cout << "Postfix: " << postfix << endl;
+        cout << "Result:  " << result << endl;
 
-    ostringstream record;
-    record << rawExpr << " = " << result;
-    enqueue(history, record.str());
+        ostringstream record;
+        record << rawExpr << " = " << result;
+        enqueue(history, record.str());
+    } catch (const exception& e) {
+        cout << "Error: " << e.what() << endl;
+    }
 }
 
 void handlePrefixEval(const string& rawExpr) {
     string expr;
     if (!substituteVariables(rawExpr ,expr)) return;
 
-    string prefix = infixToPrefix(expr);
-    int result = evaluatePrefix(prefix);
+    try {
+        string prefix = infixToPrefix(expr);
+        int result = evaluatePrefix(prefix);
 
-    cout << "Prefix: " << prefix << endl;
-    cout << "Result: " << result << endl;
+        cout << "Prefix: " << prefix << endl;
+        cout << "Result: " << result << endl;
 
-    ostringstream record;
-    record << rawExpr << " = " << result << " (prefix)";
-    enqueue(history, record.str());
+        ostringstream record;
+        record << rawExpr << " = " << result << " (prefix)";
+        enqueue(history, record.str());
+    } catch (const exception& e) {
+        cout << "Error: " << e.what() << endl;
+    }
 }
 
 void handleAssignment(const string& name, double value) {
