@@ -37,13 +37,6 @@ bool substituteVariables(const string& rawExpr, string& outExpr) {
                 cout << "Error: undefined variable '" << name << "'" << endl;
                 return false;
             }
-            if (value != floor(value)) {
-                cout << "Error: variable '" << name << "' = " << value
-                     << " cannot be used in an expression (must be a whole number, "
-                     << "since the expression engine only supports integer arithmetic)"
-                     << endl;
-                return false;
-            }
             outExpr += to_string(static_cast<long long>(value));
             i = j;
         } else {
@@ -64,9 +57,9 @@ void handleEval(const string& rawExpr) {
 
     try {
         string postfix = infixToPostfix(expr);
-        int result = evaluatePostfix(postfix);
-
         cout << "Postfix: " << postfix << endl;
+
+        double result = evaluatePostfix<double>(postfix);
         cout << "Result:  " << result << endl;
 
         ostringstream record;
@@ -83,9 +76,9 @@ void handlePrefixEval(const string& rawExpr) {
 
     try {
         string prefix = infixToPrefix(expr);
-        int result = evaluatePrefix(prefix);
+        cout<<"Prefix: " <<prefix<<endl;
 
-        cout << "Prefix: " << prefix << endl;
+        double result = evaluatePrefix<double>(prefix);
         cout << "Result: " << result << endl;
 
         ostringstream record;

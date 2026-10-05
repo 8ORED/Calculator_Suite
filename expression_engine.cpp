@@ -81,10 +81,10 @@ static vector<string> tokenize(const string& exp){
         {
             i++;
         }
-        else if (isdigit(static_cast<unsigned char>(ch)))
+        else if (isdigit(static_cast<unsigned char>(ch)) || ch == '.')
         {
             string number;
-            while (i < exp.length() && isdigit(static_cast<unsigned char>(exp[i])))
+            while (i < exp.length() && (isdigit(static_cast<unsigned char>(exp[i])) || exp[i] == '.'))
             {
                 number += exp[i];
                 i++;
@@ -107,7 +107,20 @@ static vector<string> tokenize(const string& exp){
 }
 
 static bool isNumberToken(const string& tok){
-    return !tok.empty() && isdigit(static_cast<unsigned char>(tok[0]));
+    return !tok.empty() && (isdigit(static_cast<unsigned char>(tok[0])) || tok[0] == '.');
+}
+
+static double parseNumber(const string& tok){
+    size_t pos = 0;
+    double value;
+    try {
+        value = stod(tok, &pos);
+    } catch (const exception&) {
+        throw runtime_error("Invalid number '" + tok + "'");
+    }
+    if (pos != tok.size())
+        throw runtime_error("Invalid number '" + tok + "'");
+    return value;
 }
 
 string infixToPostfix(string exp){
@@ -196,7 +209,7 @@ string infixToPrefix(string exp){
             char op = tok[0];
             while (!s.isEmpty() &&
                    (precedence(s.peek()) > precedence(op) ||
-                    (precedence(s.peek())) == precedence(op) && op == '^'))
+                    (precedence(s.peek()) == precedence(op) && op == '^')))
             {
                 output.push_back(string(1, s.pop()));
             }
@@ -204,13 +217,14 @@ string infixToPrefix(string exp){
         }
     }
 
-    reverse(output.begin(), output.end());
-
+    
     while (!s.isEmpty()){
     char c = s.pop();
     if (c == '(') throw runtime_error("Mismatched brackets");
     output.push_back(string(1, c));
     }
+    
+    reverse(output.begin(), output.end());
     
     string prefix;
     for (size_t i = 0; i < output.size(); i++)
@@ -221,55 +235,55 @@ string infixToPrefix(string exp){
     return prefix;
 }
 
-int operation(int a, int b, char op){
+template <typename T>
+T operation(T a, T b, char op){
     switch (op)
     {
         case '+':
             return a + b;
-            break;
         case '-':
             return a - b;
-            break;
         case '*':
             return a * b;
-            break;
         case '/':
             if (b == 0) throw runtime_error("Division by zero");
             return a / b;
-            break;
         case '^':
-            int r = 1;
-            for (int i = 0; i < b; i++) r *= a;
-            return r;
-            break;
-    return 0;
+            return static_cast<T>(pow(a,b));
     }
+    return 0;
 }
 
-int evaluatePostfix(string exp){
-    Stack<int> s;
+template <typename T>
+T evaluatePostfix(string exp){
+    Stack<T> s;
     istringstream iss(exp);
     string tok;
     while (iss >> tok)
     {
         if (isNumberToken(tok))
         {
-            s.push(stoi(tok));
+            s.push(static_cast<T>(parseNumber(tok)));
         }
         else if (isOperator(tok[0]))
         {
-            int val1 = s.pop();
-            int val2 = s.pop();
-            s.push(operation(val2, val1, tok[0]));
+            T val1 = s.pop();
+            T val2 = s.pop();
+            s.push(operation<T>(val2, val1, tok[0]));
+        }
+        else
+        {
+            throw runtime_error("Unknown token '" + tok + "'");
         }
     }
-    int result = s.pop();
+    T result = s.pop();
     if (!s.isEmpty()) throw runtime_error("Invalid expression (missing operator)");
     return result;
 }
 
-int evaluatePrefix(string exp){
-    Stack<int> s;
+template <typename T>
+T evaluatePrefix(string exp){
+    Stack<T> s;
     istringstream iss(exp);
     vector<string> tokens;
     string tok;
@@ -280,16 +294,23 @@ int evaluatePrefix(string exp){
         const string& t = tokens[i];
         if (isNumberToken(t))
         {
-            s.push(stoi(t));
+            s.push(static_cast<T>(parseNumber(t)));
         }
         else if (isOperator(t[0]))
         {
-            int val1 = s.pop();
-            int val2 = s.pop();
-            s.push(operation(val1, val2, t[0]));
+            T val1 = s.pop();
+            T val2 = s.pop();
+            s.push(operation<T>(val1, val2, t[0]));
+        }
+        else
+        {
+            throw runtime_error("Unknown token '" + t + "'");
         }
     }
-    int result = s.pop();
+    T result = s.pop();
     if (!s.isEmpty()) throw runtime_error("Invalid expression (missing operator)");
     return result;
 }
+
+template double evaluatePostfix<double>(string);
+template double evaluatePrefix<double>(string);

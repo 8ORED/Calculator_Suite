@@ -40,12 +40,15 @@ string infixToPostfix(string exp);
 string infixToPrefix(string exp);
 
 // performs a op b for a single operator
-int operation(int a, int b, char op);
+template <typename T>
+T operation(T a, T b, char op);
 
 // evaluates a postfix expression and returns the result
-int evaluatePostfix(string exp);
+template <typename T>
+T evaluatePostfix(string exp);
 
 // evaluates a prefix expression and returns the result
-int evaluatePrefix(string exp);
+template <typename T>
+T evaluatePrefix(string exp);
 
 #endif // EXPRESSION_ENGINE_H
